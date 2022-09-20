@@ -1,3 +1,11 @@
+'''
+Author : woosang
+Date : 16.9.2022
+Name : EKF_Positioning
+Language : Python 3.9.12
+License: GPLv2 License
+'''
+
 import numpy as np
 from numpy.linalg import inv
 from numpy.core.fromnumeric import transpose
