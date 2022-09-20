@@ -8,7 +8,6 @@ import time
 import datetime
 from fxpmath import Fxp
 from multiprocessing import Process, Queue
-from EKF_AoA import EKF
 
 import numpy.matlib
 import numpy as np
@@ -186,10 +185,6 @@ if __name__ == "__main__":
     # ranging_result_csvF = 'results/UWB_SR150_ranging_test_result-%s.csv' %nowDatetime
     # save_csv(ranging_result_csvF, ['Session_ID','Distance','pos_X','pos_Y','ref_X','ref_Y','AoA_azimuth','PDoA_azimuth'])
     # save_csv(ranging_result_csvF, ['Session_ID','Distance','pos_X','pos_Y','ref_X','ref_Y','AoA_azimuth','PDoA_azimuth', 'Estimated_Err', 'Ref_Err'])
-    EKF1 = EKF()
-    EKF2 = EKF()
-    EKF3 = EKF()
-    EKF4 = EKF()
 
     ekf = Unlab_SR150_Resp()
     ekf.Positioning()

@@ -63,9 +63,9 @@ class Unlab_SR150_Resp():
         
         '''USER INPUT VARIABLES'''
         # self.ref = np.array([0.0001, 1.25]) # reference position of tag
-        h_anc = 1.20 # height of anchor(SECC)
-        h_tag = 1.15 # height of tag(CAR)
-        self.h_diff = h_anc - h_tag
+        # h_anc = 1.20 # height of anchor(SECC)
+        # h_tag = 1.15 # height of tag(CAR)
+        # self.h_diff = h_anc - h_tag
 
         ''' Kalman Filter Variables '''
         ##Time Interval
@@ -99,7 +99,7 @@ class Unlab_SR150_Resp():
     def ekf_update(self, Measurement):
         '''1. Time Update("Predict")'''
         #1.1 Project the state ahead
-        if (self.cnt == 0):
+        if (self.cnt1 == 0):
             X = np.array([[Measurement[0,0]],[Measurement[1,0]],[0.1],[0.1],[1],[1]])
             self.pXk = self.A @ X
         else : self.pXk = self.A @ self.X
@@ -142,75 +142,61 @@ class Unlab_SR150_Resp():
         print(state_ntf_rx)
         time.sleep(self.reset_delay)
 
-        # state_ntf_rx = serial_trx(self.scpi_rx, "UWB DISOFFSET 30\r\n") # Input offset value
-        # print(state_ntf_rx)
-        # state_ntf_rx = serial_trx(self.scpi_rx, "UWB ANTPAIR 1\r\n") # Set PDOA offset to responder
-        # print(state_ntf_rx)
-        # state_ntf_rx = serial_trx(self.scpi_rx, "UWB PDOAOFFSET -50\r\n") # Input offset value
-        # print(state_ntf_rx)
-
         ## Session #1 Ranging start ##
         state_ntf_rx = serial_trx(self.scpi_rx, "UWB MTRESP ON\r\n") # Responder of Session #1 start Command
         print(state_ntf_rx)
         time.sleep(self.delay)
 
-        self.scpi_rx.close()
-        # self.scpi_rx = serial.Serial(Rx_DEVICE_COM_PORT, baudrate=230400, timeout=6)
-        # self.scpi_ret = serial_rx(self.scpi_rx)
-
         while 1: 
-            self.scpi_rx = serial.Serial(Rx_DEVICE_COM_PORT, baudrate=230400, timeout=6)
+
             self.scpi_ret = serial_rx(self.scpi_rx)
             try:
                 ## Data Parsing ##
                 result = self.scpi_ret.split(' ')
                 session_id = result[0]
                 # distance = int(result[4],16)
-                distance = Fxp(val="0x"+result[5]+"0x"+result[4], signed=False, n_word=16, n_frac=0).astype(int).tolist()
+                distance = Fxp(val="0x"+result[5]+"0x"+result[4], signed=False, n_word=16, n_frac=0).astype(int).tolist() - 10
                 AoA_azimuth = Fxp(val="0x"+result[7]+"0x"+result[6], signed=True, n_word=16, n_frac=7).astype(float)
                 PDoA_azimuth = Fxp(val="0x"+result[9]+"0x"+result[8], signed=True, n_word=16, n_frac=7).astype(float)
                 
-                # distance2 = int(result[5],16)
-            #     aoa_azimuth = result[2]
-            #     aoa_elevation = result[3]
-            #     pdoa_azimuth = result[4]
-            #     pdoa_elevation = result[5].replace("\r\n", '')
+                ## convert types for dist and angle 
+                # dist = math.sqrt(math.pow(float(distance)/100,2) - math.pow(self.h_diff,2))
+                dist = float(distance)/100
+                angle = math.pi * (float(AoA_azimuth)+90)/180
+                s_dist = str(dist)
+                
+                # ## calculate position of TAGs
+                x = dist * math.cos(angle)
+                y = dist * math.sin(angle)
+                x_ref = str(x)
+                y_ref = str(y)
+                # r_X2Y2 = pow((x - self.ref[0]),2) + pow((y - self.ref[1]),2)
+                # r_err = str(r_X2Y2)
+                if  result[0] == '33':
+                    meas = np.array([[x],[y]])
+                    self.ekf_update(meas)
+                    self.cnt = 1
+                    print("TAG 3 x,y : ({:.2f}, {:.2f})".format(x,y),"Dist : ", dist,"\n")
+                    print(Fore.GREEN,"TAG 3 EKF : ({:.2f}, {:.2f})".format(self.X[0][0],self.X[1][0]),"\n",Fore.RESET)
+                    
+                else : pass
+                # x_pos = self.X[0,0]
+                # y_pos = self.X[1,0]
+                # e_X2Y2 = pow((x_pos - self.ref[0]),2) + pow((y_pos - self.ref[1]),2)
+                # e_err = str(e_X2Y2)
+                
+                # self.plot()     
             except:
                 pass
-            
-            ## convert types for dist and angle 
-            # dist = math.sqrt(math.pow(float(distance)/100,2) - math.pow(self.h_diff,2))
-            # angle = math.pi * (float(aoa_azimuth)+90)/180
-            # s_dist = str(dist)
-            
-            # ## calculate position of TAGs
-            # x = dist * math.cos(angle)
-            # y = dist * math.sin(angle)
-            # x_ref = str(x)
-            # y_ref = str(y)
-            # # r_X2Y2 = pow((x - self.ref[0]),2) + pow((y - self.ref[1]),2)
-            # # r_err = str(r_X2Y2)
-            
-            # meas = np.array([[x],[y]])
-            # self.ekf_update(meas)
-            # self.cnt = 1
-
-            # x_pos = self.X[0,0]
-            # y_pos = self.X[1,0]
-            # e_X2Y2 = pow((x_pos - self.ref[0]),2) + pow((y_pos - self.ref[1]),2)
-            # e_err = str(e_X2Y2)
-            
-            # self.plot()
-            
-            print(Fore.GREEN, session_id, distance, Fore.RESET)
             # # print(Fore.GREEN, x_ref, y_ref, scpi_ret,Fore.RESET)
             
             # ## save data(.csv file) ##
             # save_csv(ranging_result_csvF, [session_id, s_dist, x_pos, y_pos, x_ref, y_ref,aoa_azimuth, pdoa_azimuth])
             # save_csv(ranging_result_csvF, [session_id, s_dist, x_pos, y_pos, x_ref, y_ref,aoa_azimuth, pdoa_azimuth, e_err, r_err])
             # time.sleep(self.delay)
-            self.scpi_rx.close()
-
+            self.scpi_rx.flush()
+            result.clear()
+            time.sleep(0.1)
 
 if __name__ == "__main__": 
     # now = datetime.datetime.now()
