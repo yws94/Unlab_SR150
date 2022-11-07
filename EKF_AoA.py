@@ -12,7 +12,7 @@ from numpy.core.fromnumeric import transpose
 
 from math import *
 
-class EKF():
+class EKF_AoA():
     def __init__(self):
         '''USER INPUT VARIABLES'''
         self.cnt1, self.cnt2, self.cnt3, self.cnt4 = 0,0,0,0
