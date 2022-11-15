@@ -33,7 +33,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 
-from Correct_pos_ver2 import *
+from Correct_pos_ver3 import *
 # ---------------------------------TEST RUN CONFIGS---------------------------------------------------------------------
 
 Rx_DEVICE_COM_PORT = 'com16' #responder COM Port
@@ -64,7 +64,7 @@ def time_ms():
     return round(datetime.datetime.utcnow().timestamp() * 1000)
 
 def calc_nlos(p_dnn):
-    model = tf.keras.models.load_model('VA11.h5')
+    model = tf.keras.models.load_model('HH01.h5')
     input_dnn = np.array([Parsing_DNN(p_dnn)])
     y_predict = model.predict(x=input_dnn)
     return y_predict[0][0]
@@ -94,11 +94,11 @@ def put_serial(q):
 class Positioning():
     def __init__(self):
         self.ekf = EKF_AoA()
-        self.corr = EKF_corr()
+        self.corr = EKF_Corr()
         self.h_diff = 1.8 - 0.8
     
-    # def parsing(self, q, csv):    
-    def parsing(self, q):
+    def parsing(self, q, csv):    
+    # def parsing(self, q):
         global last_time
         selected = []
         while q:
@@ -112,7 +112,7 @@ class Positioning():
                 dt = time - last_time
    
                 nlos = calc_nlos(result)
-                print(nlos)
+                # print(nlos)
 
                 AoA = float(AoA_azimuth)
                 angle = math.pi * (AoA+90)/180
@@ -149,7 +149,12 @@ class Positioning():
                     elif id == '44': selected.append([id,e_x4,e_y4,nlos])
                     
                 else:
-                    self.corr.corr_pos(selected)
+                    # target, ref, pos1, pos2, pos3, pos4, fst, snd = self.corr.corr_pos(selected)
+                    target, ref, pos1, pos2, pos3, pos4 = self.corr.corr_pos(selected)
+                    
+                    if target != False :
+                        # save_csv(csv, [target[0],target[1],ref[0],ref[1],pos1[0],pos1[1],pos2[0],pos2[1],pos3[0],pos3[1],pos4[0],pos4[1],fst,snd])
+                        save_csv(csv, [target[0],target[1],ref[0],ref[1],pos1[0],pos1[1],pos2[0],pos2[1],pos3[0],pos3[1],pos4[0],pos4[1]])
                     selected.clear()
                     
                     if id == '11': selected.append([id,e_x1,e_y1,nlos])
@@ -163,17 +168,18 @@ class Positioning():
 
 if __name__ == "__main__": 
     
-    # now = datetime.datetime.now()
-    # nowDatetime = now.strftime('%Y_%m_%d_%H_%M_%S')
-    # csvF = 'UWB_SR150_ranging_test_result-%s.csv' %nowDatetime
-    # save_csv(csvF, ['TAG_ID','pos_X','pos_Y','Distance','AoA_azimuth'])
+    now = datetime.datetime.now()
+    nowDatetime = now.strftime('%Y_%m_%d_%H_%M_%S')
+    csvF = 'Positioning_test_result-%s.csv' %nowDatetime
+    # save_csv(csvF, ['TARGET_X','TARGET_Y','REF_X','REF_Y','POS1_X','POS1_Y','POS2_X','POS2_Y','POS3_X','POS3_Y','POS4_X','POS4_Y','First Node','Second Node'])
+    save_csv(csvF, ['TARGET_X','TARGET_Y','REF_X','REF_Y','POS1_X','POS1_Y','POS2_X','POS2_Y','POS3_X','POS3_Y','POS4_X','POS4_Y'])
     
     p = Positioning()
     q = Queue()
 
     p1 = Process(target=put_serial, args =(q,))
-    # p2 = Process(target=p.parsing, args=(q,csv))
-    p2 = Process(target=p.parsing, args=(q,))
+    p2 = Process(target=p.parsing, args=(q,csvF))
+    # p2 = Process(target=p.parsing, args=(q,))
     
     p1.start()
     p2.start()

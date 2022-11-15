@@ -119,12 +119,10 @@ def corr_pos(tag_pos):
         
         mid_12, mid_34 = [(pos1[0] + pos2[0])/2, (pos1[1] + pos2[1])/2], [(pos3[0] + pos4[0])/2, (pos3[1] + pos4[1])/2]
         target = [round((m * mid_34[0] + n * mid_12[0])/(m + n),3), round((m * mid_34[1] + n * mid_12[1])/(m + n),3)]
-        
-        print(f_node, s_node, [f_x, f_y], [round(s_x,3), round(s_y,3)])
-        print(pos1, pos2, pos3, pos4, target)
-        # return target
+        return target, pos1, pos2, pos3, pos4, f_node[0], s_node[0]
+
     else:
-        pass
+        return False, False, False, False, False, False, False
     
     
 
