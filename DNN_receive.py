@@ -1,10 +1,4 @@
-import os, sys
-from re import L
 import csv
-import random
-import signal
-import socket
-import threading
 import time
 import datetime
 from fxpmath import Fxp
@@ -12,22 +6,14 @@ from Parse_DNN import *
 from EKF_AoA import *
 from multiprocessing import Process, Queue
 
-import numpy.matlib
-import numpy as np
-from numpy.linalg import inv
-from numpy.core.fromnumeric import transpose
-
 import math
 from math import *
 
-import pyvisa as visa
 from colorama import Fore
 
 import serial
 import serial.tools.list_ports
 import serial.serialutil
-
-import matplotlib.pyplot as plt
 
 # ---------------------------------TEST RUN CONFIGS---------------------------------------------------------------------
 
@@ -56,7 +42,6 @@ def save_csv(csvf, row):
         w.writerow(row)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
-
 def put_serial(q):
     ## Reset all ##
     delay = 3
@@ -74,7 +59,6 @@ def put_serial(q):
         scpi_ret = serial_rx(scpi_rx)
         q.put(scpi_ret)
         scpi_rx.flush()
-
 
 def Modeling(q, csv):
     h_diff = 1.8 - 0.8
@@ -95,13 +79,13 @@ def Modeling(q, csv):
             input_dnn = Parsing_DNN(result)
 
             data = []
+            data.append(id)
             data.append(nlos)
+            data.append(dist)
             data.append(AoA_azimuth)
-            data.append(angle)
 
             save_csv(csv, data + input_dnn)
 
-            # self.plot()
             result.clear()
             input_dnn.clear()
             data.clear()    
@@ -112,7 +96,7 @@ if __name__ == "__main__":
     nowDatetime = now.strftime('%Y_%m_%d_%H_%M_%S')
     csvF = 'dnn_test_result-%s.csv' %nowDatetime
     
-    save_csv(csvF, ['nlos','Distance','AoA','SNR main path 1','SNR main path 2','SNR main path 3','SNR main path 4','SNR first path 1','SNR first path 2','SNR first path 3','SNR first path 4',
+    save_csv(csvF, ['id','nlos','Distance','AoA','SNR main path 1','SNR main path 2','SNR main path 3','SNR main path 4','SNR first path 1','SNR first path 2','SNR first path 3','SNR first path 4',
                     'SNR Total 1','SNR Total 2','SNR Total 3', 'SNR Total 4','RSSI 1','RSSI 2','RSSI 3','RSSI 4','CIR main power 1','CIR main power 2', 'CIR main power 3','CIR main power 4',
                     'CIR first path power 1','CIR first path power 2','CIR first path power3','CIR first path power 4','Noise variance 1','Noise variance 2','Noise variance 3','Noise variance 4',
                     'CFO 1','CFO 2','CFO 3','CFO 4','AoA Phase 1','AoA Phase 2','AoA Phase 3','AoA Phase 4','First path index 1','First path index 2','First path index 3','First path index 4',

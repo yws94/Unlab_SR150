@@ -34,7 +34,7 @@ pi = math.pi
 ang_a = math.atan2(dist_x, dist_y)
 ang_b = math.atan2(dist_y, dist_x)
 
-class EKF_Corr():
+class Corr():
     def __init__(self):
         '''USER INPUT VARIABLES'''
         self.cnt = 0
@@ -70,7 +70,7 @@ class EKF_Corr():
         #Measurement Matrix
         self.H = np.array([[1,0,0,0,0,0],[0,1,0,0,0,0]])
         
-    def ekf_update(self, Measurement):
+    def kf_update(self, Measurement):
         '''1. Time Update("Predict")'''
         #1.1 Project the state ahead
         self.pXk = self.A @ self.X
@@ -182,10 +182,10 @@ class EKF_Corr():
             mid_12, mid_34 = [(pos1[0] + pos2[0])/2, (pos1[1] + pos2[1])/2], [(pos3[0] + pos4[0])/2, (pos3[1] + pos4[1])/2]
             target = [round((m * mid_34[0] + n * mid_12[0])/(m + n),3), round((m * mid_34[1] + n * mid_12[1])/(m + n),3)]
             meas = np.array([[target[0]],[target[1]]])
-            self.ekf_update(meas)
+            self.kf_update(meas)
             t_x, t_y = round(self.X[0][0],3), round(self.X[1][0],3)
             # print(f_node, s_node, [f_x, f_y], [round(s_x,3), round(s_y,3)], target)
-            print((t_x, t_y))
+            print(n,(t_x, t_y))
             # print(target)
             return target,[t_x, t_y], pos1, pos2, pos3, pos4
             
@@ -197,17 +197,12 @@ class EKF_Corr():
             target = [round((m * mid_34[0] + n * mid_12[0])/(m + n),3), round((m * mid_34[1] + n * mid_12[1])/(m + n),3)]
             
             meas = np.array([[target[0]],[target[1]]])
-            self.ekf_update(meas)
+            self.kf_update(meas)
             t_x, t_y = round(self.X[0][0],3), round(self.X[1][0],3)
-            print((t_x, t_y))
+            print(n,(t_x, t_y))
             
             return target,[t_x, t_y], pos1, pos2, pos3, pos4
             
             
         else:
             return False,False,False,False,False,False
-    
-    
-
-# print(((0.83333 * 3.14159)+1.5*pi)%(2*pi))
-# print(((0.83333 * 3.14159)+1.5*pi)%(2*pi)/pi)

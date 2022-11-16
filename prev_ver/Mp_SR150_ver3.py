@@ -94,7 +94,7 @@ def put_serial(q):
 class Positioning():
     def __init__(self):
         self.ekf = EKF_AoA()
-        self.corr = EKF_Corr()
+        self.corr = Corr()
         self.h_diff = 1.8 - 0.8
     
     def parsing(self, q, csv):    
