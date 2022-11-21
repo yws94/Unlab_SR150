@@ -1,6 +1,0 @@
-distance = Fxp(val="0x"+text[12:14]+"0x"+text[10:12], signed=False, n_word=16, n_frac=0).astype(int).tolist()
-AoA_azimuth = Fxp(val="0x"+text[16:18]+"0x"+text[14:16], signed=True, n_word=16, n_frac=7).astype(float)
-PDoA_azimuth = Fxp(val="0x"+text[20:22]+"0x"+text[18:20], signed=True, n_word=16, n_frac=7).astype(float)
-AoA_elevation = Fxp(val="0x"+text[24:26]+"0x"+text[22:24], signed=True, n_word=16, n_frac=7).astype(float)
-PDoA_elevation = Fxp(val="0x"+text[28:30]+"0x"+text[26:28], signed=True, n_word=16, n_frac=7).astype(float)
-nlos = Fxp(val="0x"+text[30:32], signed = False, n_word=8, n_frac = 0).astype(int).tolist()

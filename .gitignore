@@ -95,3 +95,16 @@ dnn_input/lab_test_data/validation.csv
 dnn_input/master_train.csv
 Positioning_test_result-2022_11_14_16_09_43.csv
 dnn_input/validation.csv
+prev_ver/AMO_python_program.py
+logs/20221118-170111/train/events.out.tfevents.1668758475.DESKTOP-4IF41IU.30104.0.v2
+logs/20221118-170111/validation/events.out.tfevents.1668758480.DESKTOP-4IF41IU.30104.1.v2
+logs/20221118-170631/train/events.out.tfevents.1668758793.DESKTOP-4IF41IU.35560.0.v2
+logs/20221118-170631/validation/events.out.tfevents.1668758798.DESKTOP-4IF41IU.35560.1.v2
+logs/20221118-171735/train/events.out.tfevents.1668759458.DESKTOP-4IF41IU.6400.0.v2
+logs/20221118-171735/validation/events.out.tfevents.1668759462.DESKTOP-4IF41IU.6400.1.v2
+logs/20221118-171940/train/events.out.tfevents.1668759583.DESKTOP-4IF41IU.38048.0.v2
+logs/20221118-171940/validation/events.out.tfevents.1668759588.DESKTOP-4IF41IU.38048.1.v2
+logs/20221118-172103/train/events.out.tfevents.1668759665.DESKTOP-4IF41IU.38048.2.v2
+logs/20221118-172103/validation/events.out.tfevents.1668759667.DESKTOP-4IF41IU.38048.3.v2
+logs/20221118-172323/train/events.out.tfevents.1668759805.DESKTOP-4IF41IU.38048.4.v2
+logs/20221118-172323/validation/events.out.tfevents.1668759808.DESKTOP-4IF41IU.38048.5.v2

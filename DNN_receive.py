@@ -2,14 +2,11 @@ import csv
 import time
 import datetime
 from fxpmath import Fxp
-from Parse_DNN import *
-from EKF_AoA import *
+from Parse_DNN_ver2 import *
 from multiprocessing import Process, Queue
 
 import math
 from math import *
-
-from colorama import Fore
 
 import serial
 import serial.tools.list_ports
@@ -94,7 +91,7 @@ def Modeling(q, csv):
 if __name__ == "__main__": 
     now = datetime.datetime.now()
     nowDatetime = now.strftime('%Y_%m_%d_%H_%M_%S')
-    csvF = 'dnn_test_result-%s.csv' %nowDatetime
+    csvF = 'dnn_result-%s.csv' %nowDatetime
     
     save_csv(csvF, ['id','nlos','Distance','AoA','SNR main path 1','SNR main path 2','SNR main path 3','SNR main path 4','SNR first path 1','SNR first path 2','SNR first path 3','SNR first path 4',
                     'SNR Total 1','SNR Total 2','SNR Total 3', 'SNR Total 4','RSSI 1','RSSI 2','RSSI 3','RSSI 4','CIR main power 1','CIR main power 2', 'CIR main power 3','CIR main power 4',
