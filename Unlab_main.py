@@ -55,7 +55,7 @@ def load_csv():
     now = datetime.datetime.now()
     nowDatetime = now.strftime('%Y_%m_%d_%H_%M_%S')
     csvF = 'Positioning_test_result-%s.csv' %nowDatetime
-    save_csv(csvF, ['TARGET_X','TARGET_Y','REF_X','REF_Y','POS1_X','POS1_Y','POS2_X','POS2_Y','POS3_X','POS3_Y','POS4_X','POS4_Y'])
+    save_csv(csvF, ['TARGET_X','TARGET_Y','POS1_X','POS1_Y','POS2_X','POS2_Y','POS3_X','POS3_Y','POS4_X','POS4_Y'])
     return csvF
 
 def save_csv(csvf, row):
@@ -80,6 +80,7 @@ def put_serial(q):
     delay = 3
     cnt_s = 0
     scpi_rx = serial.Serial(Rx_DEVICE_COM_PORT, baudrate=230400, timeout=6)
+    
     state_ntf_rx = serial_trx(scpi_rx, "RST\r\n") # 1. 'RST' Command to board(TX) 2. Read response from board(RX)
     print(state_ntf_rx)
     time.sleep(delay)
@@ -87,16 +88,22 @@ def put_serial(q):
     ## Ranging start ##
     state_ntf_rx = serial_trx(scpi_rx, "UWB MTRESP ON\r\n") # 'Session start' Command
     print(state_ntf_rx)
-    
     time.sleep(delay)
 
     while True: 
+        scpi_rx.flush() # Wait until all data is written
         scpi_ret = serial_rx(scpi_rx)
         scpi_ret += str(time_ms())
-        q.put(scpi_ret)
-        cnt_s += 1
-        print("serial",cnt_s , datetime.datetime.now().time())
-        scpi_rx.flush() # Wait until all data is written
+        
+        if q.qsize() < 13 and cnt_s == 0:
+            q.put(scpi_ret)
+            # cnt_s += 1
+        elif q.qsize() >= 13 or cnt_s != 0 :
+            print(Fore.GREEN,q.qsize(),Fore.RESET)
+            
+            cnt_s += 1
+            if cnt_s % 8 == 0 :
+                cnt_s = 0 
                 
 
 class Positioning():
@@ -106,16 +113,18 @@ class Positioning():
         self.h_diff = 1.8 - 0.8
         self.check_dt = 0
     
-    def parsing(self, q, csv, q2):    
+    def parsing(self, q1, q2, csv):    
     # def parsing(self, q):
         last_time = 0
-        cnt_p = 0
+        # cnt_p = 0
         selected = []
-        while q:
+        while q1:
             try:
-                q_data = q.get()
+                # proc_p = os.getpid()
+                # print("positioning process : ", proc_p)
+                q_data = q1.get()
                 result = list(q_data.split(' '))
-                cnt_p += 1
+
                 id = result[1]
                 nlos = calc_nlos(result)
                 # nlos = 0.1
@@ -159,26 +168,20 @@ class Positioning():
                     self.KF.R4 = np.diag([r1Temp , r2Temp]) 
                     self.KF.kf_update4(meas)
                     self.KF.fst4, kf_x4, kf_y4 = False, round(self.KF.X4[0][0],3), round(self.KF.X4[1][0],3)
-                print("parsing",cnt_p , datetime.datetime.now().time())
-                print(Fore.GREEN,q.qsize(),Fore.RESET)
-                # if q.qsize() > 7:
-                #     q.get()
                     
-                print(id, Fore.RED,dt,Fore.RESET)
-                if self.check_dt < 360:
+                print(id, Fore.RED, dt, Fore.RESET)
+                if self.check_dt < 370:
                     if id == '11': selected.append([id,kf_x1,kf_y1,nlos])
                     elif id == '22': selected.append([id,kf_x2,kf_y2,nlos])
                     elif id == '33': selected.append([id,kf_x3,kf_y3,nlos])
                     elif id == '44': selected.append([id,kf_x4,kf_y4,nlos])
                     
                 else:
-                    # target, ref, pos1, pos2, pos3, pos4, fst, snd = self.corr.corr_pos(selected))
-                    target, ref, pos1, pos2, pos3, pos4 = self.Corr.corr_pos(selected)
+                    target, pos1, pos2, pos3, pos4 = self.Corr.corr_pos(selected)
                     q2.put(target)
                     
                     if target != False :
-                        # save_csv(csv, [target[0],target[1],ref[0],ref[1],pos1[0],pos1[1],pos2[0],pos2[1],pos3[0],pos3[1],pos4[0],pos4[1],fst,snd])
-                        save_csv(csv, [target[0],target[1],ref[0],ref[1],pos1[0],pos1[1],pos2[0],pos2[1],pos3[0],pos3[1],pos4[0],pos4[1]])
+                        save_csv(csv, [target[0],target[1],pos1[0],pos1[1],pos2[0],pos2[1],pos3[0],pos3[1],pos4[0],pos4[1]])
                     selected.clear()
                     self.check_dt = 0
                     
@@ -199,7 +202,7 @@ if __name__ == "__main__":
     q1, q2 = Queue(), Queue()
 
     p1 = Process(target=put_serial, args = (q1,))
-    p2 = Process(target=p.parsing, args=(q1, f_name, q2))
+    p2 = Process(target=p.parsing, args=(q1, q2, f_name))
     # p2 = Process(target=p.parsing, args=(q,))
     
     for i in [p1, p2]:
@@ -207,8 +210,7 @@ if __name__ == "__main__":
 
     while q2 :
         cnt+=1
-        print(q2.get())
-        print("server",cnt , datetime.datetime.now().time())
+        print("server", q2.get(), cnt)
         
     # for i in [p1, p2]:
     #     i.join()

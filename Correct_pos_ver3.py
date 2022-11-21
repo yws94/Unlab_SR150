@@ -53,8 +53,8 @@ class Correction():
         self.P = np.vstack((p1,p2,p3))
 
         self.Q = np.diag([0.01,0.01,0.25,0.16,0.25,0.16]) 
-        mul = 5
-        r1, r2 = 0.1692 * mul, 0.1991 * mul
+        self.mul = 100
+        r1, r2 = 0.1692 * self.mul, 0.1991 * self.mul
         self.R = np.diag([r1 , r2]) 
         
     def kf_update(self, Measurement):
@@ -160,12 +160,12 @@ class Correction():
             mid_12, mid_34 = [(pos1[0] + pos2[0])/2, (pos1[1] + pos2[1])/2], [(pos3[0] + pos4[0])/2, (pos3[1] + pos4[1])/2]
             target = [round((m * mid_34[0] + n * mid_12[0])/(m + n),3), round((m * mid_34[1] + n * mid_12[1])/(m + n),3)]
             meas = np.array([[target[0]],[target[1]]])
+            
             self.kf_update(meas)
             t_x, t_y = round(self.X[0][0],3), round(self.X[1][0],3)
-            # print(f_node, s_node, [f_x, f_y], [round(s_x,3), round(s_y,3)], target)
             print(n,(t_x, t_y))
-            # print(target)
-            return [t_x, t_y], target, pos1, pos2, pos3, pos4
+            
+            return [t_x, t_y], pos1, pos2, pos3, pos4
             
         elif n == 4:
             tag_pos.sort(key = lambda x : x[0])
@@ -173,15 +173,24 @@ class Correction():
             mid_12, mid_34 = [(pos1[0] + pos2[0])/2, (pos1[1] + pos2[1])/2], [(pos3[0] + pos4[0])/2, (pos3[1] + pos4[1])/2]
             
             target = [round((m * mid_34[0] + n * mid_12[0])/(m + n),3), round((m * mid_34[1] + n * mid_12[1])/(m + n),3)]
+            self.X[0][0], self.X[1][0] = target[0], target[1]
             
-            meas = np.array([[target[0]],[target[1]]])
-            self.kf_update(meas)
-            t_x, t_y = round(self.X[0][0],3), round(self.X[1][0],3)
-            print(n,(t_x, t_y))
+            print(n, tuple(target))
             
-            return [t_x, t_y], target, pos1, pos2, pos3, pos4
+            return target, pos1, pos2, pos3, pos4
+        
+        elif n > 4:
+            tag_pos = tag_pos[:4]
+            tag_pos.sort(key = lambda x : x[0])
+            pos1, pos2, pos3, pos4 = [tag_pos[0][1], tag_pos[0][2]], [tag_pos[1][1], tag_pos[1][2]], [tag_pos[2][1], tag_pos[2][2]], [tag_pos[3][1], tag_pos[3][2]]
+            mid_12, mid_34 = [(pos1[0] + pos2[0])/2, (pos1[1] + pos2[1])/2], [(pos3[0] + pos4[0])/2, (pos3[1] + pos4[1])/2]
             
+            target = [round((m * mid_34[0] + n * mid_12[0])/(m + n),3), round((m * mid_34[1] + n * mid_12[1])/(m + n),3)]
+            self.X[0][0], self.X[1][0] = target[0], target[1]
             
+            print(n, tuple(target))
+            
+            return target, pos1, pos2, pos3, pos4
+        
         else:
-            print(n)
-            return False,False,False,False,False,False
+            return False,False,False,False,False
