@@ -11,8 +11,3 @@ while True :
     
     msg = input('msg:') 
     socket.sendall(msg.encode(encoding='utf-8'))
-
-
-# data = socket.recv(100)
-# msg = data.decode() 
-# print('echo msg:', msg)

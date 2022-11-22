@@ -1,5 +1,4 @@
 import os, sys
-from re import L
 import csv
 import socket
 import threading
@@ -12,16 +11,12 @@ import numpy as np
 import math
 from math import *
 
-import pyvisa as visa
 from colorama import Fore
 
 import serial
 import serial.tools.list_ports
 import serial.serialutil
 
-import matplotlib.pyplot as plt
-
-import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 
@@ -107,7 +102,7 @@ def Put_serial(q):
 class Positioning():
     def __init__(self):
         self.KF = AKF()
-        self.Corr = Correction()
+        self.Corr = Correction(dist_x = 0.4, dist_y = 0.6)
         self.h_diff = 1.8 - 0.8
         self.check_dt = 0
     
@@ -151,7 +146,7 @@ class Positioning():
                 
                 elif id == '22':
                     r1Temp, r2Temp = self.KF.r1 + self.KF.r1_gap * nlos, self.KF.r2 + self.KF.r2_gap * nlos
-                    self.KF.R2 = np.diag([r1Temp , r2Temp]) 
+                    self.KF.R2 = np.diag([r1Temp , r2Temp])
                     self.KF.kf_update2(meas)
                     self.KF.fst2, kf_x2, kf_y2 = False, round(self.KF.X2[0][0],3), round(self.KF.X2[1][0],3)
                     
@@ -200,7 +195,7 @@ class AppServer():
         self.server_sock.bind((self.host, self.port))
         self.server_sock.listen()
         self.p1, self.p2, self.q2 = p1, p2, q2
-        print("waiting for App Connection..")
+        print("waiting for Client Connection..")
         
     def Connect(self):
         cnt = 0
@@ -215,7 +210,7 @@ class AppServer():
             if client_sock:
                 print('Connected by, ', addr)
                 if client_sock.recv(1024).decode("utf-8") == 's':
-                    print('------------------ START UWB SESSION ------------------')
+                    print('------------------------ START UWB SESSION ------------------------')
                     for i in [self.p1, self.p2]:
                         i.start()
 
@@ -223,23 +218,25 @@ class AppServer():
                     ht.daemon = True
                     ht.start()
                     
-                    while self.q2 :
+                    while self.q2:
                         cnt+=1
-                        client_sock.send(str(self.q2.get()).encode("utf-8"))
-                        print('send : ', self.q2.get(), cnt)
-                        
+                        data = self.q2.get()
+                        client_sock.send(str(data).encode("utf-8"))
+                        print('send : ', data, cnt)
+
     def handler(self, c):
         while True:
             try:
                 data = c.recv(1024)
                 msg = data.decode("utf-8")
                 if msg == 'f':
-                    print('------------------ TERMINATE UWB SESSION ------------------')
                     for i in [self.p1, self.p2]:
                         i.terminate()
-                    self.server_sock.close()
+                        i.join()
+                    c.close()
+                    print('------------------------ TERMINATE UWB SESSION ------------------------')
             except:
-                self.server_sock.close()
+                c.close()
                 break
             
 if __name__ == "__main__": 
@@ -254,6 +251,3 @@ if __name__ == "__main__":
     
     serv = AppServer(p1, p2, q2)
     serv.Connect()
-        
-    # for i in [p1, p2]:
-    #     i.join()
