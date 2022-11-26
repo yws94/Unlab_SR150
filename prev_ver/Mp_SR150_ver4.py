@@ -29,7 +29,7 @@ import tensorflow as tf
 
 from Parse_DNN_ver2 import *
 from AKF import *
-from Correct_pos_ver3 import *
+from prev_ver.Correct_pos_ver3 import *
 # ---------------------------------TEST RUN CONFIGS---------------------------------------------------------------------
 
 Rx_DEVICE_COM_PORT = 'com16' #responder COM Port

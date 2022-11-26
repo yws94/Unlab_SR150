@@ -1,6 +1,7 @@
 import os, sys
 import csv
 import socket
+import pickle
 import threading
 import time
 import datetime
@@ -22,7 +23,7 @@ import tensorflow as tf
 
 from Parse_DNN_ver2 import *
 from AKF import *
-from Correct_pos_ver3 import *
+from Correct_pos_ver4 import *
 # ---------------------------------TEST RUN CONFIGS---------------------------------------------------------------------
 
 Rx_DEVICE_COM_PORT = 'com16' #responder COM Port
@@ -60,7 +61,7 @@ def time_ms():
     return round(datetime.datetime.utcnow().timestamp() * 1000)
 
 def calc_nlos(p_dnn):
-    model = tf.keras.models.load_model('HH03.h5')
+    model = tf.keras.models.load_model('HH01.h5')
     input_dnn = np.array([Parsing_DNN(p_dnn)])
     y_predict = model.predict(x=input_dnn)
     return y_predict[0][0]
@@ -106,8 +107,8 @@ class Positioning():
         self.h_diff = 1.8 - 0.8
         self.check_dt = 0
     
-    def Parsing(self, q1, q2, csv):    
-    # def parsing(self, q):
+    # def Parsing(self, q1, q2, csv):    
+    def Parsing(self, q1, q2):
         last_time = 0
         # cnt_p = 0
         selected = []
@@ -171,10 +172,10 @@ class Positioning():
                     
                 else:
                     target, pos1, pos2, pos3, pos4 = self.Corr.corr_pos(selected)
-                    q2.put(target)
                     
                     if target != False :
-                        save_csv(csv, [target[0],target[1],pos1[0],pos1[1],pos2[0],pos2[1],pos3[0],pos3[1],pos4[0],pos4[1]])
+                        q2.put(target)
+                        # save_csv(csv, [target[0],target[1],pos1[0],pos1[1],pos2[0],pos2[1],pos3[0],pos3[1],pos4[0],pos4[1]])
                     selected.clear()
                     self.check_dt = 0
                     
@@ -209,26 +210,44 @@ class AppServer():
             
             if client_sock:
                 print('Connected by, ', addr)
-                if client_sock.recv(1024).decode("utf-8") == 's':
-                    print('------------------------ START UWB SESSION ------------------------')
-                    for i in [self.p1, self.p2]:
-                        i.start()
+                recv = client_sock.recv(1024).decode("utf-8")
+                print(recv, type(recv))
+                # if recv == 's':
+                print('------------------------ START UWB SESSION ------------------------')
+                for i in [self.p1, self.p2]:
+                    i.start()
 
-                    ht = threading.Thread(target = self.handler, args=(client_sock,))
-                    ht.daemon = True
-                    ht.start()
+                ht = threading.Thread(target = self.handler, args=(client_sock,))
+                ht.daemon = True
+                ht.start()
+                
+                while self.q2:
+                    cnt+=1
+                    msg = []
+                    data = self.q2.get()
                     
-                    while self.q2:
-                        cnt+=1
-                        data = self.q2.get()
-                        client_sock.send(str(data).encode("utf-8"))
-                        print('send : ', data, cnt)
+                    # client_sock.sendall(str(data).encode("utf-8"))
+                    
+                    # client_sock.sendall(str(data[0]).encode("utf-8"))
+                    # client_sock.sendall(str(data[1]).encode("utf-8"))
+                    for i in data:
+                        msg.append(int(i * 1000).to_bytes(4, byteorder = "little", signed = True))
+                    msg = pickle.dumps(msg)
+                    # client_sock.sendall(int(15000).to_bytes(10, byteorder = "little", signed = True))
+                    # client_sock.sendall(int(-15000).to_bytes(10, byteorder = "little", signed = True))
 
+                    client_sock.sendall(msg)
+                    # client_sock.sendall(msg[1])
+                    
+                    # print(msg[0],msg[1])
+                    print('send : ', msg, cnt)
+            
     def handler(self, c):
         while True:
             try:
                 data = c.recv(1024)
                 msg = data.decode("utf-8")
+
                 if msg == 'f':
                     for i in [self.p1, self.p2]:
                         i.terminate()
@@ -241,13 +260,13 @@ class AppServer():
             
 if __name__ == "__main__": 
     
-    f_name = load_csv()
+    # f_name = load_csv()
     p = Positioning()
     q1, q2 = Queue(), Queue()
 
     p1 = Process(target=Put_serial, args = (q1,))
-    p2 = Process(target=p.Parsing, args=(q1, q2, f_name))
-    # p2 = Process(target=p.Parsing, args=(q1,))
+    # p2 = Process(target=p.Parsing, args=(q1, q2, f_name))
+    p2 = Process(target=p.Parsing, args=(q1,q2))
     
     serv = AppServer(p1, p2, q2)
     serv.Connect()

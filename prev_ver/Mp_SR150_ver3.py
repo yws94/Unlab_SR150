@@ -33,7 +33,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 
-from Correct_pos_ver3 import *
+from prev_ver.Correct_pos_ver3 import *
 # ---------------------------------TEST RUN CONFIGS---------------------------------------------------------------------
 
 Rx_DEVICE_COM_PORT = 'com16' #responder COM Port
@@ -94,7 +94,7 @@ def put_serial(q):
 class Positioning():
     def __init__(self):
         self.ekf = EKF_AoA()
-        self.corr = Corr()
+        self.corr = Correction()
         self.h_diff = 1.8 - 0.8
     
     def parsing(self, q, csv):    
