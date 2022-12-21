@@ -173,9 +173,9 @@ if __name__ == "__main__":
     p = Positioning()
     q1, q2 = Queue(), Queue()
 
-    p1 = Process(target=Put_serial, args = (q1, Rx_DEVICE_COM_PORT))
+    proc1 = Process(target=Put_serial, args = (q1, Rx_DEVICE_COM_PORT))
     # p2 = Process(target=p.Parsing, args=(q1, q2, f_name))
-    p2 = Process(target=p.Parsing, args=(q1,q2))
+    proc2 = Process(target=p.Parsing, args=(q1,q2))
     
-    serv = AppServer(ip=server_ip, port=port_num, p1=p1, p2=p2, q2=q2)
+    serv = AppServer(ip=server_ip, port=port_num, p1=proc1, p2=proc2, q2=q2)
     serv.Connect()

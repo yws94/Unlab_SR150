@@ -21,53 +21,44 @@ class AppServer():
                 self.server_sock.close()
                 print("Exit Program..")
                 sys.exit()
-            
+            except OSError:
+                print("Exit Program..")
+                sys.exit()
+
             if client_sock:
                 print('Connected by, ', addr)
-                recv = client_sock.recv(1024).decode("utf-8")
-                print(recv, type(recv))
-                # if recv == 's':
-                print('------------------------ START UWB SESSION ------------------------')
+
                 for i in [self.p1, self.p2]:
                     i.start()
+
+                print('------------------------ START UWB SESSION ------------------------')
 
                 ht = threading.Thread(target = self.handler, args=(client_sock,))
                 ht.daemon = True
                 ht.start()
-                
-                while self.q2:
-                    cnt+=1
-                    # msg = []
-                    data = self.q2.get()
-                    
-                    client_sock.sendall(str(data).encode("utf-8"))
-                    
-                    # client_sock.sendall(str(data[0]).encode("utf-8"))
-                    # client_sock.sendall(str(data[1]).encode("utf-8"))
-                    # for i in data:
-                    #     msg.append(int(i * 1000).to_bytes(4, byteorder = "little", signed = True))
-                    # msg = pickle.dumps(msg)
-                    # client_sock.sendall(int(15000).to_bytes(10, byteorder = "little", signed = True))
-                    # client_sock.sendall(int(-15000).to_bytes(10, byteorder = "little", signed = True))
 
-                    # client_sock.sendall(msg)
-                    # client_sock.sendall(msg[1])
-                    
-                    # print(msg[0],msg[1])
+                while self.q2:
+                    cnt += 1
+                    data = ''.join(str(self.q2.get()))
+                    client_sock.sendall(data.encode())
                     print('send : ', data, cnt)
-            
-    def handler(self, c):
+
+    def handler(self, client):
+        given_string = ""
         while True:
             try:
-                data = c.recv(1024)
-                msg = data.decode("utf-8")
-
-                if msg == 'f':
-                    for i in [self.p1, self.p2]:
-                        i.terminate()
-                        i.join()
-                    c.close()
-                    print('------------------------ TERMINATE UWB SESSION ------------------------')
+                data = client.recv(1024)
+                if data :
+                    given_string = data.decode("utf-8", errors = "ignore")
+                    if "f" in given_string:
+                        for i in [self.p1, self.p2]:
+                            i.terminate()
+                            i.join()
+                        client.close()
+                        self.server_sock.close()
+                        print('------------------------ TERMINATE UWB SESSION ------------------------')
+                        sys.exit()
             except:
-                c.close()
+                client.close()
+                self.server_sock.close()
                 break
